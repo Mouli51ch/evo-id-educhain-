@@ -4,7 +4,7 @@ import styled from 'styled-components';
 const ModalStyled = styled.div`
   position: absolute;
   top: 0;
-  right: 0px; /* Adjust this based on your layout */
+  right: 0px;
   width: 300px;
   height: 100%;
   background: #333;
@@ -36,7 +36,14 @@ const ModalStyled = styled.div`
   }
 `;
 
-const Modal = ({ title, content, onClose, isOpen }) => (
+interface ModalProps {
+  title: string;
+  content: React.ReactNode;
+  onClose: () => void;
+  isOpen: boolean;
+}
+
+const Modal: React.FC<ModalProps> = ({ title, content, onClose, isOpen }) => (
   <ModalStyled className={isOpen ? 'open' : ''}>
     <div className="modal-content">
       <h3>{title}</h3>

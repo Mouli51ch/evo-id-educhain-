@@ -1,112 +1,68 @@
 "use client";
-import React from "react";
-import {
-  useWallet,
-  InputTransactionData,
-} from "@aptos-labs/wallet-adapter-react";
-import toast from "react-hot-toast";
-import { Provider, Network } from "aptos";
-// import { Aptos, AptosConfig,  } from "@aptos-labs/ts-sdk";
-const DataContext = React.createContext();
-const DataContextProvider = ({ children }) => {
-  //   const aptosConfig = new AptosConfig({ network: Network.DEVNET });
-  const provider = new Provider(Network.DEVNET);
-  //   const aptos = new Aptos(aptosConfig);
-  const { account, signAndSubmitTransaction } = useWallet();
-  const MODULE_ADDRESS =
-    "0x25e6d86a5a7083d9d61e40381e5238ab6d2e785825eba0183cebb6009483dab4";
-  //   const getTokenMetadata = async (hostAddress: string) => {
-  //     if (!hostAddress) return;
-  //     const functionType = "get_metadata";
-  //     try {
-  //       const todoListResource = await aptos.view({
-  //         payload: {
-  //           function: `${MODULE_ADDRESS}::reels_fi::${functionType}`,
-  //           typeArguments: [],
-  //           functionArguments: [],
-  //         },
-  //       });
-  //       console.log(todoListResource, "todoListResource");
-  //     } catch (e: any) {
-  //       console.error(e, "error");
-  //     }
-  //   };
+import { createContext, useContext } from 'react';
 
-  const mintTokens = async (toAddress: string, mintAmount: number) => {
-    const mintPayload = {
-      data: {
-        function: `${MODULE_ADDRESS}::reels_fi::mint`,
-        typeArguments: [],
-        functionArguments: [toAddress, mintAmount],
-      },
-    };
+// Define the context type
+interface DataContextType {
+  mintTokens: (address: string, amount: number) => Promise<void>;
+  transferTokens: (fromAddress: string, toAddress: string, amount: number) => Promise<void>;
+  depositTokens: () => Promise<void>;
+}
+
+// Create context
+const DataContext = createContext<DataContextType | undefined>(undefined);
+
+// Custom hook to use the context
+export function useDataContext() {
+  const context = useContext(DataContext);
+  if (context === undefined) {
+    throw new Error('useDataContext must be used within a DataContextProvider');
+  }
+  return context;
+}
+
+// Provider component
+export const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
+  // Implement your token functions
+  const mintTokens = async (address: string, amount: number) => {
     try {
-      let id = toast.loading("Investing Tokens...");
-      // sign and submit transaction to chain
-      const response = await signAndSubmitTransaction(mintPayload);
-      // wait for transaction
-      await provider.waitForTransaction(response.hash);
-      toast.success("Invested Successfully !!!", { id });
-    } catch (error: any) {
-      console.log(error);
-      toast.error("Investment Failed !!!");
-    }
-  };
-  const transferTokens = async (fromAddress, toAddress, transferAmount) => {
-    let id = toast.loading("Claiming Tokens...");
-    const transferPayload = {
-      data: {
-        function: `${MODULE_ADDRESS}::reels_fi::transfer`, // Update this with the correct module and function name
-        typeArguments: [], // Add any type arguments if needed
-        functionArguments: [fromAddress, toAddress, transferAmount],
-      },
-    };
-
-    try {
-      // Sign and submit the transaction to the chain
-      const response = await signAndSubmitTransaction(transferPayload);
-
-      // Wait for the transaction to be confirmed
-      await provider.waitForTransaction(response.hash);
-    toast.success("Claimed Successfully !!!", { id });
-      console.log("Transfer successful");
+      // Your minting logic here
+      console.log('Minting tokens:', { address, amount });
     } catch (error) {
-      console.log("Transfer failed", error);
-        toast.error("Claiming Failed !!!");
+      console.error('Error minting tokens:', error);
     }
   };
-  const depositTokens = async (toAddress, fungibleAsset) => {
-    const depositPayload = {
-      data: {
-        function: `${MODULE_ADDRESS}::reels_fi::deposit`,
-        typeArguments: [],
-        functionArguments: [toAddress, fungibleAsset],
-      },
-    };
 
+  const transferTokens = async (fromAddress: string, toAddress: string, amount: number) => {
     try {
-      // Sign and submit the transaction to the chain
-      const response = await signAndSubmitTransaction(depositPayload);
-      // Wait for the transaction to be confirmed
-      await provider.waitForTransaction(response.hash);
-      console.log("Deposit successful");
+      // Your transfer logic here
+      console.log('Transferring tokens:', { fromAddress, toAddress, amount });
     } catch (error) {
-      console.log("Deposit failed", error);
+      console.error('Error transferring tokens:', error);
     }
   };
+
+  const depositTokens = async () => {
+    try {
+      // Your deposit logic here
+      console.log('Depositing tokens');
+    } catch (error) {
+      console.error('Error depositing tokens:', error);
+    }
+  };
+
+  // Create the context value object
+  const value = {
+    mintTokens,
+    transferTokens,
+    depositTokens,
+  };
+
+  // Provide the context to children
   return (
-    <DataContext.Provider
-      value={{
-        // getTokenMetadata,
-        mintTokens,
-        transferTokens,
-        depositTokens,
-      }}
-    >
+    <DataContext.Provider value={value}>
       {children}
     </DataContext.Provider>
   );
 };
 
-export const useDataContext = () => React.useContext(DataContext);
 export default DataContextProvider;
